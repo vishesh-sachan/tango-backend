@@ -87,6 +87,10 @@ function solveTango({
 } = {}) {
     const board = Array.from({ length: size }, () => Array(size).fill(null));
     const stack = [];
+    const row0 = Array(size).fill(0);
+    const row1 = Array(size).fill(0);
+    const column0 = Array(size).fill(0);
+    const column1 = Array(size).fill(0);
 
     const filledMap = normalizeFilledCells(filled_cells);
     const equalConstraints = normalizeConstraints(equal_constraints);
@@ -96,6 +100,23 @@ function solveTango({
         const [r, c] = key.split(',').map(Number);
         if (r >= 0 && r < size && c >= 0 && c < size) {
             board[r][c] = val;
+        }
+    }
+
+    function updateCounts(r, c, val, delta) {
+        if (val === 0) {
+            row0[r] += delta;
+            column0[c] += delta;
+        } else {
+            row1[r] += delta;
+            column1[c] += delta;
+        }
+    }
+
+    for (const [key, val] of filledMap.entries()) {
+        const [r, c] = key.split(',').map(Number);
+        if (r >= 0 && r < size && c >= 0 && c < size) {
+            updateCounts(r, c, val, 1);
         }
     }
 
@@ -111,19 +132,11 @@ function solveTango({
     const limitPerValue = Math.floor(size / 2);
 
     function validateRowsAndColumnsCount(r, c, val) {
-        let rowCount = 0;
-        let colCount = 0;
-
-        for (let i = 0; i < size; i += 1) {
-            if (board[r][i] === val) {
-                rowCount += 1;
-            }
-            if (board[i][c] === val) {
-                colCount += 1;
-            }
+        if (val === 0) {
+            return row0[r] < limitPerValue && column0[c] < limitPerValue;
         }
 
-        return rowCount < limitPerValue && colCount < limitPerValue;
+        return row1[r] < limitPerValue && column1[c] < limitPerValue;
     }
 
     function checkThreeConsecutive(r, c, val) {
@@ -200,6 +213,7 @@ function solveTango({
         for (const val of [0, 1]) {
             if (isValid(r, c, val)) {
                 board[r][c] = val;
+                updateCounts(r, c, val, 1);
                 stack.push([r, c, val]);
 
                 if (solve(index + 1)) {
@@ -207,6 +221,7 @@ function solveTango({
                 }
 
                 board[r][c] = null;
+                updateCounts(r, c, val, -1);
                 stack.push([r, c, null]);
             }
         }

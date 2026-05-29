@@ -219,6 +219,7 @@ function solveTango({
     return {
         status: solved ? 'Solved' : 'No solution found',
         stack,
+        board: solved ? board : null,
     };
 }
 
